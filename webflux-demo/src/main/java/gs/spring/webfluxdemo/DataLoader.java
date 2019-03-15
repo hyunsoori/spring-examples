@@ -29,14 +29,17 @@ public class DataLoader {
     @PostConstruct
     public void loadData() {
 
-        List<Person> friendList = LongStream.range(1, 100)
+        List<Person> friendList = LongStream.range(1, 101)
                 .boxed().map(id -> new Person(id, id.toString())).collect(Collectors.toList());
 
         personOps.opsForValue().set("friend:1", friendList)
-                .subscribe(System.out::println);
-        logger.info("Redis Data load end");
+                .subscribe(result -> logger.info("Redis Data load end! result:" + result));
 
-        personRepository.saveAll(friendList);
-        logger.info("RDB Data load end");
+        personRepository.saveAll(friendList)
+                .thenAcceptAsync(result -> logger.info("RDB Data load end! size:" + result.size()))
+                .exceptionally(throwable -> {
+                    System.out.println("exception occurred!!");
+                    return null;
+                });
     }
 }
