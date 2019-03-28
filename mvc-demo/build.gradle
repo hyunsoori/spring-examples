@@ -1,3 +1,6 @@
+import org.apache.tools.ant.filters.FixCrLfFilter
+import org.apache.tools.ant.filters.ReplaceTokens
+
 version '1.0-SNAPSHOT'
 
 dependencies {
@@ -6,3 +9,19 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     runtimeOnly 'mysql:mysql-connector-java'
 }
+
+
+task deployBeanstalkZip(type: Zip, dependsOn: bootJar) {
+    from('build/libs') {
+        include "${jar.archiveName}"
+    }
+    from('.ebextensions') {
+        into '.ebextensions'
+    }
+    from('Procfile'){
+        filter{ it.replaceAll('@jarArchiveName@', "${jar.archiveName}")}
+    }
+    archiveName "${jar.archiveName}" + new Date().format('yyyyMMddHHmmss') + ".zip"
+}
+
+build.dependsOn(deployBeanstalkZip)
